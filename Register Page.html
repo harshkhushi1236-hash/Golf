@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — GolfHero</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+    .auth-wrap { width:100%; max-width:480px; }
+    .auth-card { background:var(--panel); border:1px solid var(--border-sub); border-radius:var(--r-xl); padding:48px 40px; }
+    .auth-bg { position:fixed; inset:0; z-index:-1; background:radial-gradient(ellipse 60% 60% at 50% 50%, rgba(201,168,76,0.05) 0%, transparent 70%); }
+    .steps { display:flex; gap:8px; margin-bottom:36px; }
+    .step-pip { flex:1; height:3px; border-radius:99px; background:var(--surface); transition:background 0.3s; }
+    .step-pip.done { background:var(--gold); }
+    .step-pip.active { background:var(--gold-dim); }
+    @media(max-width:480px) { .auth-card { padding:32px 24px; } }
+  </style>
+</head>
+<body>
+<div class="auth-bg"></div>
+<div class="auth-wrap fade-in">
+  <a href="../index.html" class="logo" style="display:block;margin-bottom:32px">Golf<span style="color:var(--gold)">Hero</span></a>
+
+  <div class="auth-card">
+    <div class="steps">
+      <div class="step-pip active" id="pip1"></div>
+      <div class="step-pip" id="pip2"></div>
+      <div class="step-pip" id="pip3"></div>
+    </div>
+
+    <!-- Step 1: Account -->
+    <div id="step1">
+      <h1 class="display-sm mb-8">Create your account</h1>
+      <p class="body-sm muted mb-28">Join GolfHero and start making a difference.</p>
+      <div class="flex-col gap-18">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First name</label>
+            <input type="text" id="firstName" class="form-input" placeholder="James" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last name</label>
+            <input type="text" id="lastName" class="form-input" placeholder="Murphy" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <input type="email" id="regEmail" class="form-input" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="regPassword" class="form-input" placeholder="Min. 8 characters" required minlength="8">
+          <span class="form-hint">At least 8 characters</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm password</label>
+          <input type="password" id="regConfirm" class="form-input" placeholder="••••••••" required>
+        </div>
+        <div id="step1Error" class="form-error hidden"></div>
+        <button class="btn btn-primary btn-full" onclick="nextStep(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Charity -->
+    <div id="step2" class="hidden">
+      <h1 class="display-sm mb-8">Choose your charity</h1>
+      <p class="body-sm muted mb-24">Minimum 10% of your subscription will go to your chosen cause every month.</p>
+
+      <div class="form-group mb-20">
+        <label class="form-label">Select a charity</label>
+        <select id="charitySelect" class="form-select">
+          <option value="">Loading charities…</option>
+        </select>
+      </div>
+
+      <div id="charityPreview" class="card mb-20 hidden" style="padding:20px">
+        <div class="flex gap-12 align-items:center">
+          <div id="charityIcon" style="font-size:1.6rem;width:40px;text-align:center"></div>
+          <div>
+            <div id="charityPreviewName" class="body-sm" style="font-weight:500"></div>
+            <div id="charityPreviewDesc" class="body-sm muted mt-4" style="font-size:0.8rem"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group mb-24">
+        <label class="form-label">Charity contribution — <span class="gold" id="pctLabel">10%</span></label>
+        <input type="range" id="charityPct" min="10" max="50" value="10" step="5" style="width:100%;accent-color:var(--gold)">
+        <div class="flex-between mt-8">
+          <span class="body-sm muted">10% minimum</span>
+          <span class="body-sm muted">50% generous</span>
+        </div>
+      </div>
+
+      <div class="flex gap-12">
+        <button class="btn btn-outline" onclick="nextStep(1)" style="flex:1">← Back</button>
+        <button class="btn btn-primary" onclick="nextStep(3)" style="flex:2">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Plan -->
+    <div id="step3" class="hidden">
+      <h1 class="display-sm mb-8">Choose your plan</h1>
+      <p class="body-sm muted mb-28">Both plans include all features, draws, and charity contributions.</p>
+
+      <div class="flex-col gap-16 mb-28">
+        <label class="card" style="cursor:pointer;padding:20px;border:2px solid transparent;transition:var(--transition)" id="planMonthly">
+          <div class="flex-between">
+            <div>
+              <div class="flex gap-10 mb-4">
+                <input type="radio" name="plan" value="monthly" checked style="accent-color:var(--gold)">
+                <span style="font-weight:500">Monthly</span>
+              </div>
+              <div class="body-sm muted">Full access · cancel any time</div>
+            </div>
+            <div class="text-right">
+              <div class="display-sm gold">£15</div>
+              <div class="body-sm muted">/ month</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="card" style="cursor:pointer;padding:20px;border:2px solid transparent;position:relative;transition:var(--transition)" id="planYearly">
+          <div class="badge badge-gold" style="position:absolute;top:-10px;right:16px">Save 17%</div>
+          <div class="flex-between">
+            <div>
+              <div class="flex gap-10 mb-4">
+                <input type="radio" name="plan" value="yearly" style="accent-color:var(--gold)">
+                <span style="font-weight:500">Yearly</span>
+              </div>
+              <div class="body-sm muted">Best value · all features</div>
+            </div>
+            <div class="text-right">
+              <div class="display-sm gold">£150</div>
+              <div class="body-sm muted">/ year</div>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Stripe-style mock payment -->
+      <div style="background:var(--surface);border:1px solid var(--border-sub);border-radius:var(--r-md);padding:20px;margin-bottom:20px">
+        <div class="label mb-14" style="font-size:0.6rem">Payment Details (Demo)</div>
+        <div class="form-group mb-14">
+          <label class="form-label">Card number</label>
+          <input class="form-input" placeholder="4242 4242 4242 4242" maxlength="19" id="cardNum">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Expiry</label>
+            <input class="form-input" placeholder="MM/YY" maxlength="5" id="cardExp">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVC</label>
+            <input class="form-input" placeholder="123" maxlength="3" id="cardCvc">
+          </div>
+        </div>
+        <div class="body-sm muted mt-12" style="display:flex;align-items:center;gap:6px">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Demo mode — no real charge will occur
+        </div>
+      </div>
+
+      <div id="step3Error" class="form-error hidden mb-16"></div>
+      <div class="flex gap-12">
+        <button class="btn btn-outline" onclick="nextStep(2)" style="flex:1">← Back</button>
+        <button class="btn btn-primary" onclick="register()" style="flex:2" id="registerBtn">Subscribe & Join</button>
+      </div>
+
+      <p class="body-sm muted text-center mt-16">By subscribing you agree to our <a href="#" class="gold">Terms</a></p>
+    </div>
+  </div>
+
+  <p class="body-sm muted text-center mt-20">
+    Already have an account? <a href="login.html" class="gold">Log in</a>
+  </p>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+<script src="../js/app.js"></script>
+<script>
+  let currentStep = 1;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (GH.auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+    // Populate charities
+    const charities = GH.charity.getAll();
+    const sel = document.getElementById('charitySelect');
+    sel.innerHTML = '<option value="">— Select a charity —</option>';
+    charities.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = `${GH.ui.charityIcon(c.category)} ${c.name}`;
+      sel.appendChild(opt);
+    });
+
+    sel.addEventListener('change', () => {
+      const c = GH.charity.getById(sel.value);
+      const preview = document.getElementById('charityPreview');
+      if (c) {
+        document.getElementById('charityIcon').textContent = GH.ui.charityIcon(c.category);
+        document.getElementById('charityPreviewName').textContent = c.name;
+        document.getElementById('charityPreviewDesc').textContent = c.description;
+        preview.classList.remove('hidden');
+      } else preview.classList.add('hidden');
+    });
+
+    document.getElementById('charityPct').addEventListener('input', function() {
+      document.getElementById('pctLabel').textContent = this.value + '%';
+    });
+
+    // Plan selection highlight
+    document.querySelectorAll('input[name="plan"]').forEach(radio => {
+      radio.addEventListener('change', () => updatePlanHighlight());
+    });
+    updatePlanHighlight();
+
+    // Card number formatting
+    document.getElementById('cardNum').addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g,'').replace(/(\d{4})/g,'$1 ').trim().substring(0,19);
+    });
+    document.getElementById('cardExp').addEventListener('input', function() {
+      let v = this.value.replace(/\D/g,'');
+      if (v.length >= 2) v = v.substring(0,2) + '/' + v.substring(2);
+      this.value = v.substring(0,5);
+    });
+  });
+
+  function updatePlanHighlight() {
+    const val = document.querySelector('input[name="plan"]:checked')?.value;
+    document.getElementById('planMonthly').style.borderColor = val==='monthly' ? 'var(--gold)' : 'transparent';
+    document.getElementById('planYearly').style.borderColor  = val==='yearly'  ? 'var(--gold)' : 'transparent';
+  }
+
+  function nextStep(n) {
+    if (n === 2) {
+      // Validate step 1
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName  = document.getElementById('lastName').value.trim();
+      const email     = document.getElementById('regEmail').value.trim();
+      const password  = document.getElementById('regPassword').value;
+      const confirm   = document.getElementById('regConfirm').value;
+      const err = document.getElementById('step1Error');
+      if (!firstName || !lastName || !email || !password) { err.textContent = 'All fields are required.'; err.classList.remove('hidden'); return; }
+      if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; err.classList.remove('hidden'); return; }
+      if (password !== confirm) { err.textContent = 'Passwords do not match.'; err.classList.remove('hidden'); return; }
+      err.classList.add('hidden');
+    }
+    currentStep = n;
+    [1,2,3].forEach(i => {
+      document.getElementById('step'+i).classList.toggle('hidden', i !== n);
+      const pip = document.getElementById('pip'+i);
+      pip.className = 'step-pip' + (i < n ? ' done' : i === n ? ' active' : '');
+    });
+  }
+
+  async function register() {
+    const btn = document.getElementById('registerBtn');
+    const err = document.getElementById('step3Error');
+    err.classList.add('hidden');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Processing…';
+    await new Promise(r => setTimeout(r, 1200));
+    try {
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName  = document.getElementById('lastName').value.trim();
+      const email     = document.getElementById('regEmail').value.trim();
+      const password  = document.getElementById('regPassword').value;
+      const charityId = document.getElementById('charitySelect').value;
+      const charityPct= parseInt(document.getElementById('charityPct').value);
+      const planId    = document.querySelector('input[name="plan"]:checked')?.value || 'monthly';
+
+      const user = GH.auth.register({ name: firstName+' '+lastName, email, password });
+      if (charityId) GH.charity.select(charityId, charityPct);
+      GH.subscriptions.activate(planId);
+
+      GH.ui.toast('Welcome to GolfHero, ' + firstName + '! 🎉', 'success');
+      setTimeout(() => window.location.href = 'dashboard.html', 800);
+    } catch (e) {
+      err.textContent = e.message;
+      err.classList.remove('hidden');
+      btn.disabled = false;
+      btn.innerHTML = 'Subscribe & Join';
+    }
+  }
+</script>
+</body>
+</html>

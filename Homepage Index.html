@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GolfHero — Play. Give. Win.</title>
+  <meta name="description" content="The subscription golf platform where your scores power prize draws and fund charities you love.">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    /* ── Homepage extras ── */
+    .impact-ticker {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(201,168,76,0.08); border: 1px solid var(--border);
+      border-radius: 99px; padding: 8px 20px; width: fit-content;
+      margin-bottom: 32px;
+    }
+    .ticker-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse-gold 2s infinite; }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; background: var(--border-sub); border-radius: var(--r-xl); overflow: hidden; }
+    .feature-cell { background: var(--dark); padding: 40px 32px; }
+    .feature-cell:hover { background: var(--panel); }
+    .feature-num { font-family: var(--font-display); font-size: 3.5rem; font-weight: 300; color: var(--gold); opacity: 0.3; }
+
+    .charity-strip { display: flex; gap: 16px; overflow: hidden; position: relative; }
+    .charity-strip::after { content:''; position:absolute; right:0; top:0; bottom:0; width:120px; background: linear-gradient(90deg,transparent,var(--black)); pointer-events:none; }
+    .charity-chip {
+      flex-shrink: 0; padding: 10px 20px; border-radius: 99px;
+      border: 1px solid var(--border-sub); background: var(--panel);
+      font-size: 0.85rem; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .prize-visual { background: var(--panel); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 40px; }
+    .prize-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border-sub); }
+    .prize-row:last-child { border-bottom: none; }
+    .match-balls { display: flex; gap: 6px; }
+    .ball { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid; display:flex;align-items:center;justify-content:center; font-size:0.65rem; font-weight:600; }
+    .ball.filled { background: var(--gold); border-color: var(--gold); color: var(--black); }
+    .ball.empty  { border-color: var(--border-sub); color: var(--muted); }
+
+    .testimonial-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .testimonial { background: var(--panel); border: 1px solid var(--border-sub); border-radius: var(--r-lg); padding: 28px; }
+    .testimonial-quote { font-family: var(--font-display); font-size: 1.05rem; font-style: italic; line-height: 1.6; margin-bottom: 20px; }
+    .testimonial-author { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display:flex;align-items:center;justify-content:center; font-size: 0.8rem; color: var(--gold); }
+
+    .cta-section { background: radial-gradient(ellipse 80% 100% at 50% 100%, rgba(201,168,76,0.08) 0%, transparent 70%); border-top: 1px solid var(--border-sub); }
+
+    .mobile-menu {
+      position: fixed; top: 0; right: -100%; width: 280px; height: 100vh;
+      background: var(--dark); border-left: 1px solid var(--border-sub);
+      z-index: 1100; padding: 24px; transition: right 0.3s ease;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .mobile-menu.open { right: 0; }
+    .mobile-menu a { display:block; padding: 12px 16px; color: var(--text); border-radius: var(--r-sm); }
+    .mobile-menu a:hover { background: var(--surface); }
+    .mobile-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:1099; }
+    .mobile-overlay.open { display:block; }
+
+    @media(max-width:768px) {
+      .feature-grid { grid-template-columns:1fr; }
+      .testimonial-grid { grid-template-columns:1fr; }
+      .prize-visual { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="navbar">
+  <div class="container navbar-inner">
+    <a href="/index.html" class="logo">Golf<span>Hero</span></a>
+    <div class="nav-links">
+      <a href="#how-it-works">How It Works</a>
+      <a href="pages/charities.html">Charities</a>
+      <a href="#prizes">Prizes</a>
+      <a href="pages/login.html">Log In</a>
+    </div>
+    <div class="nav-actions">
+      <a href="pages/subscribe.html" class="btn btn-primary">Subscribe Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <div class="flex-between mb-24">
+    <span class="logo">Golf<span style="color:var(--gold)">Hero</span></span>
+    <button id="mobileClose" style="color:var(--muted);font-size:1.4rem">✕</button>
+  </div>
+  <a href="#how-it-works">How It Works</a>
+  <a href="pages/charities.html">Charities</a>
+  <a href="#prizes">Prizes</a>
+  <a href="pages/login.html">Log In</a>
+  <div style="margin-top:auto">
+    <a href="pages/subscribe.html" class="btn btn-primary btn-full" style="margin-top:16px">Subscribe Now</a>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="impact-ticker fade-up">
+        <span class="ticker-dot"></span>
+        <span class="label">Live</span>
+        <span class="body-sm" id="impactTicker">£0 donated to charity this month</span>
+      </div>
+
+      <h1 class="display-xl fade-up delay-1">
+        Golf scores.<br>
+        <em style="color:var(--gold)">Real impact.</em>
+      </h1>
+
+      <p class="body-lg muted mt-24 fade-up delay-2" style="max-width:520px">
+        Enter your Stableford scores, enter monthly draws, and watch a portion of your subscription go directly to the charity you choose.
+      </p>
+
+      <div class="hero-cta fade-up delay-3">
+        <a href="pages/subscribe.html" class="btn btn-primary btn-lg pulse-gold">Start Playing — £15/mo</a>
+        <a href="#how-it-works" class="btn btn-outline btn-lg">See How It Works</a>
+      </div>
+
+      <div class="flex gap-32 mt-48 fade-up delay-4">
+        <div class="hero-stat">
+          <div class="display-sm" id="statSubscribers">—</div>
+          <div class="body-sm muted mt-8">Active members</div>
+        </div>
+        <div class="hero-stat">
+          <div class="display-sm gold">£<span id="statPool">—</span></div>
+          <div class="body-sm muted mt-8">This month's prize pool</div>
+        </div>
+        <div class="hero-stat">
+          <div class="display-sm" id="statCharities">6</div>
+          <div class="body-sm muted mt-8">Partner charities</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CHARITY STRIP ═══ -->
+<div class="section-sm" style="border-top:1px solid var(--border-sub);border-bottom:1px solid var(--border-sub)">
+  <div class="container">
+    <div class="flex-between mb-16">
+      <span class="label">Supported Causes</span>
+      <a href="pages/charities.html" class="body-sm gold">View all →</a>
+    </div>
+    <div class="charity-strip" id="charityStrip">
+      <!-- JS populated -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="section" id="how-it-works">
+  <div class="container">
+    <div class="text-center mb-32">
+      <div class="label mb-16">The Process</div>
+      <h2 class="display-lg">Simple by design</h2>
+      <p class="body-lg muted mt-16" style="max-width:480px;margin:16px auto 0">
+        Four steps between you and making a difference — while competing for real prizes.
+      </p>
+    </div>
+
+    <div class="feature-grid mt-48">
+      <div class="feature-cell fade-up">
+        <div class="feature-num">01</div>
+        <div class="step-icon mt-16">
+          <svg width="22" height="22" fill="none" stroke="var(--gold)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>
+        </div>
+        <h3 class="display-sm mt-12">Subscribe</h3>
+        <p class="muted mt-12">Choose monthly or yearly. Your subscription fuels the prize pool and your chosen charity.</p>
+      </div>
+      <div class="feature-cell fade-up delay-1">
+        <div class="feature-num">02</div>
+        <div class="step-icon mt-16">
+          <svg width="22" height="22" fill="none" stroke="var(--gold)" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </div>
+        <h3 class="display-sm mt-12">Enter Scores</h3>
+        <p class="muted mt-12">Log your latest Stableford scores. Your top 5 most recent rounds are always in play.</p>
+      </div>
+      <div class="feature-cell fade-up delay-2">
+        <div class="feature-num">03</div>
+        <div class="step-icon mt-16">
+          <svg width="22" height="22" fill="none" stroke="var(--gold)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <h3 class="display-sm mt-12">Monthly Draw</h3>
+        <p class="muted mt-12">Each month, five numbers are drawn. Match yours and win a share of the prize pool.</p>
+      </div>
+      <div class="feature-cell fade-up delay-3">
+        <div class="feature-num">04</div>
+        <div class="step-icon mt-16">
+          <svg width="22" height="22" fill="none" stroke="var(--gold)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-10"/></svg>
+        </div>
+        <h3 class="display-sm mt-12">Give Back</h3>
+        <p class="muted mt-12">Minimum 10% of your fee goes straight to your chosen charity, every single month.</p>
+      </div>
+      <div class="feature-cell fade-up delay-4">
+        <div class="feature-num">05</div>
+        <div class="step-icon mt-16">
+          <svg width="22" height="22" fill="none" stroke="var(--gold)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <h3 class="display-sm mt-12">Claim Winnings</h3>
+        <p class="muted mt-12">Winners upload score proof. Admin verifies and your payout is processed promptly.</p>
+      </div>
+      <div class="feature-cell fade-up delay-5" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:rgba(201,168,76,0.04)">
+        <div class="display-md gold mb-16">Ready?</div>
+        <a href="pages/subscribe.html" class="btn btn-primary">Join Today</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PRIZE POOL ═══ -->
+<section class="section" id="prizes" style="background:var(--dark);border-top:1px solid var(--border-sub)">
+  <div class="container">
+    <div class="grid-2 gap-32" style="align-items:center">
+      <div>
+        <div class="label mb-16">Prize Pool</div>
+        <h2 class="display-lg">Real money,<br>real winners</h2>
+        <p class="body-lg muted mt-20">
+          60% of every subscription builds the monthly prize pool. Three match tiers ensure more winners every draw.
+        </p>
+        <div class="mt-32">
+          <div class="prize-bar mb-16" id="prizeBar">
+            <div class="prize-seg" style="flex:40;background:var(--gold)" title="Jackpot 40%"></div>
+            <div class="prize-seg" style="flex:35;background:var(--info)" title="4 Match 35%"></div>
+            <div class="prize-seg" style="flex:25;background:var(--success)" title="3 Match 25%"></div>
+          </div>
+          <div class="flex gap-24" style="flex-wrap:wrap">
+            <div class="flex gap-8"><div style="width:10px;height:10px;border-radius:2px;background:var(--gold);margin-top:3px;flex-shrink:0"></div><span class="body-sm muted">Jackpot (5 match) — 40%</span></div>
+            <div class="flex gap-8"><div style="width:10px;height:10px;border-radius:2px;background:var(--info);margin-top:3px;flex-shrink:0"></div><span class="body-sm muted">4 Match — 35%</span></div>
+            <div class="flex gap-8"><div style="width:10px;height:10px;border-radius:2px;background:var(--success);margin-top:3px;flex-shrink:0"></div><span class="body-sm muted">3 Match — 25%</span></div>
+          </div>
+        </div>
+        <div class="mt-32">
+          <div class="label mb-8">Jackpot Rollover</div>
+          <p class="body-sm muted">If no 5-match winner is found, the jackpot rolls over and grows for next month's draw.</p>
+        </div>
+      </div>
+      <div class="prize-visual">
+        <div class="label mb-24">This Month's Pool</div>
+        <div class="prize-row">
+          <div>
+            <div class="flex gap-8 mb-8">
+              <span class="body-sm muted">5 Match</span>
+              <span class="badge badge-gold">Jackpot</span>
+            </div>
+            <div class="match-balls">
+              <div class="ball filled">●</div><div class="ball filled">●</div><div class="ball filled">●</div><div class="ball filled">●</div><div class="ball filled">●</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="stat-value" id="pool5" style="font-size:1.8rem">—</div>
+            <div class="body-sm muted">40% of pool</div>
+          </div>
+        </div>
+        <div class="prize-row">
+          <div>
+            <div class="body-sm muted mb-8">4 Match</div>
+            <div class="match-balls">
+              <div class="ball filled">●</div><div class="ball filled">●</div><div class="ball filled">●</div><div class="ball filled">●</div><div class="ball empty">○</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="stat-value" id="pool4" style="font-size:1.8rem">—</div>
+            <div class="body-sm muted">35% of pool</div>
+          </div>
+        </div>
+        <div class="prize-row">
+          <div>
+            <div class="body-sm muted mb-8">3 Match</div>
+            <div class="match-balls">
+              <div class="ball filled">●</div><div class="ball filled">●</div><div class="ball filled">●</div><div class="ball empty">○</div><div class="ball empty">○</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="stat-value" id="pool3" style="font-size:1.8rem">—</div>
+            <div class="body-sm muted">25% of pool</div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="flex-between">
+          <span class="body-sm muted">Total pool</span>
+          <span class="gold" id="poolTotal" style="font-weight:500">—</span>
+        </div>
+        <div class="flex-between mt-8">
+          <span class="body-sm muted">Active subscribers</span>
+          <span class="body-sm" id="poolSubs">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="section">
+  <div class="container">
+    <div class="text-center mb-48">
+      <div class="label mb-16">Members</div>
+      <h2 class="display-lg">They play, they give, they win</h2>
+    </div>
+    <div class="testimonial-grid">
+      <div class="testimonial fade-up">
+        <p class="testimonial-quote">"Finally a golf platform that aligns with what I actually care about. I won the 4-match tier in March and donated my winnings back to the Veterans charity."</p>
+        <div class="testimonial-author">
+          <div class="avatar">JM</div>
+          <div>
+            <div class="body-sm" style="font-weight:500">James M.</div>
+            <div class="body-sm muted">Member since Jan 2025</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial fade-up delay-1">
+        <p class="testimonial-quote">"The score entry is so clean. Takes me 30 seconds after each round. And knowing 10% goes to cancer research every month keeps me motivated."</p>
+        <div class="testimonial-author">
+          <div class="avatar">SR</div>
+          <div>
+            <div class="body-sm" style="font-weight:500">Sarah R.</div>
+            <div class="body-sm muted">Member since Feb 2025</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial fade-up delay-2">
+        <p class="testimonial-quote">"The jackpot rolled over twice before someone hit it in December. Nearly £8,000. That's what gets the whole club talking."</p>
+        <div class="testimonial-author">
+          <div class="avatar">TK</div>
+          <div>
+            <div class="body-sm" style="font-weight:500">Tom K.</div>
+            <div class="body-sm muted">Member since Dec 2024</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section class="section cta-section">
+  <div class="container text-center">
+    <div class="label mb-20">Join Today</div>
+    <h2 class="display-lg" style="max-width:600px;margin:0 auto">Every round you play,<br><em class="gold">someone benefits</em></h2>
+    <p class="body-lg muted mt-20" style="max-width:440px;margin:20px auto 0">
+      Start for £15 a month. Cancel anytime. Pick your charity on day one.
+    </p>
+    <div class="flex gap-16 mt-40" style="justify-content:center;flex-wrap:wrap">
+      <a href="pages/subscribe.html" class="btn btn-primary btn-lg">Start Your Subscription</a>
+      <a href="pages/charities.html" class="btn btn-outline btn-lg">Explore Charities</a>
+    </div>
+    <div class="mt-32 flex gap-32" style="justify-content:center;flex-wrap:wrap">
+      <div class="flex gap-8"><span style="color:var(--success)">✓</span><span class="body-sm muted">Cancel anytime</span></div>
+      <div class="flex gap-8"><span style="color:var(--success)">✓</span><span class="body-sm muted">Charity from day one</span></div>
+      <div class="flex gap-8"><span style="color:var(--success)">✓</span><span class="body-sm muted">Monthly prize draws</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer style="border-top:1px solid var(--border-sub);padding:40px 0">
+  <div class="container">
+    <div class="flex-between" style="flex-wrap:wrap;gap:24px">
+      <div>
+        <div class="logo mb-8">Golf<span style="color:var(--gold)">Hero</span></div>
+        <p class="body-sm muted">Golf, giving, and real rewards.</p>
+      </div>
+      <div class="flex gap-32" style="flex-wrap:wrap">
+        <div>
+          <div class="label mb-12" style="font-size:0.6rem">Platform</div>
+          <div class="flex-col gap-8">
+            <a href="pages/charities.html" class="body-sm muted">Charities</a>
+            <a href="#prizes" class="body-sm muted">Prizes</a>
+            <a href="pages/subscribe.html" class="body-sm muted">Subscribe</a>
+          </div>
+        </div>
+        <div>
+          <div class="label mb-12" style="font-size:0.6rem">Account</div>
+          <div class="flex-col gap-8">
+            <a href="pages/login.html" class="body-sm muted">Log In</a>
+            <a href="pages/register.html" class="body-sm muted">Register</a>
+            <a href="pages/dashboard.html" class="body-sm muted">Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="divider mt-32"></div>
+    <div class="flex-between" style="flex-wrap:wrap;gap:12px">
+      <span class="body-sm muted">© 2025 GolfHero. All rights reserved.</span>
+      <span class="body-sm muted">Built for Digital Heroes Selection</span>
+    </div>
+  </div>
+</footer>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="js/app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Redirect if logged in
+    if (GH.auth.isLoggedIn()) {
+      const user = GH.auth.getUser();
+      const loginBtn = document.querySelector('.nav-links a[href="pages/login.html"]');
+      if (loginBtn) { loginBtn.textContent = 'Dashboard'; loginBtn.href = 'pages/dashboard.html'; }
+    }
+
+    // Impact ticker
+    const pool = GH.pool.calculate();
+    const charity = GH.charity.totalContributions();
+    document.getElementById('impactTicker').textContent =
+      GH.ui.formatCurrency(charity) + ' donated to charity this month';
+
+    // Hero stats
+    document.getElementById('statSubscribers').textContent = pool.subscribers || 2;
+    document.getElementById('statPool').textContent = pool.total.toFixed(0) || '0';
+
+    // Prize visuals
+    document.getElementById('pool5').textContent = GH.ui.formatCurrency(pool.jackpot);
+    document.getElementById('pool4').textContent = GH.ui.formatCurrency(pool.fourMatch);
+    document.getElementById('pool3').textContent = GH.ui.formatCurrency(pool.threeMatch);
+    document.getElementById('poolTotal').textContent = GH.ui.formatCurrency(pool.total);
+    document.getElementById('poolSubs').textContent = pool.subscribers + ' active';
+
+    // Charity strip
+    const charities = GH.charity.getAll();
+    const strip = document.getElementById('charityStrip');
+    charities.forEach(c => {
+      const chip = document.createElement('div');
+      chip.className = 'charity-chip';
+      chip.innerHTML = `<span>${GH.ui.charityIcon(c.category)}</span><span>${c.name}</span>`;
+      strip.appendChild(chip);
+    });
+
+    // Mobile menu
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const overlay = document.getElementById('mobileOverlay');
+    const closeFn = () => { mobileMenu.classList.remove('open'); overlay.classList.remove('open'); };
+    hamburger.addEventListener('click', () => { mobileMenu.classList.toggle('open'); overlay.classList.toggle('open'); });
+    document.getElementById('mobileClose').addEventListener('click', closeFn);
+    overlay.addEventListener('click', closeFn);
+  });
+</script>
+</body>
+</html>

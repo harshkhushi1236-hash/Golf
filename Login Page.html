@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In — GolfHero</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .auth-wrap { width: 100%; max-width: 440px; }
+    .auth-card { background: var(--panel); border: 1px solid var(--border-sub); border-radius: var(--r-xl); padding: 48px 40px; }
+    .auth-bg {
+      position: fixed; inset: 0; z-index: -1;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(201,168,76,0.05) 0%, transparent 70%);
+    }
+    .demo-creds { background: var(--surface); border: 1px solid var(--border-sub); border-radius: var(--r-md); padding: 16px; margin-bottom: 24px; }
+    .demo-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .demo-row:last-child { margin-bottom: 0; }
+    @media(max-width:480px) { .auth-card { padding: 32px 24px; } }
+  </style>
+</head>
+<body>
+<div class="auth-bg"></div>
+<div class="auth-wrap fade-in">
+  <a href="../index.html" class="logo" style="display:block;margin-bottom:32px">Golf<span style="color:var(--gold)">Hero</span></a>
+
+  <div class="auth-card">
+    <h1 class="display-sm mb-8">Welcome back</h1>
+    <p class="body-sm muted mb-32">Enter your credentials to access your dashboard.</p>
+
+    <!-- Demo credentials -->
+    <div class="demo-creds">
+      <div class="label mb-10" style="font-size:0.6rem">Demo Credentials</div>
+      <div class="demo-row">
+        <span class="body-sm muted">Subscriber:</span>
+        <span class="body-sm" style="font-family:var(--font-mono);font-size:0.8rem">test@golfhero.com / test123</span>
+      </div>
+      <div class="demo-row">
+        <span class="body-sm muted">Admin:</span>
+        <span class="body-sm" style="font-family:var(--font-mono);font-size:0.8rem">admin@golfhero.com / admin123</span>
+      </div>
+      <div class="flex gap-8 mt-10">
+        <button class="btn btn-outline btn-sm" onclick="fillCreds('test@golfhero.com','test123')">Use Subscriber</button>
+        <button class="btn btn-outline btn-sm" onclick="fillCreds('admin@golfhero.com','admin123')">Use Admin</button>
+      </div>
+    </div>
+
+    <form id="loginForm">
+      <div class="flex-col gap-20">
+        <div class="form-group">
+          <label class="form-label" for="email">Email address</label>
+          <input type="email" id="email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="relative">
+            <input type="password" id="password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" id="togglePwd" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.8rem">Show</button>
+          </div>
+        </div>
+        <div id="loginError" class="form-error hidden"></div>
+        <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+          <span>Log In</span>
+        </button>
+      </div>
+    </form>
+
+    <div class="divider"></div>
+    <p class="body-sm muted text-center">
+      Don't have an account? <a href="register.html" class="gold">Sign up</a>
+    </p>
+  </div>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (GH.auth.isLoggedIn()) {
+      window.location.href = GH.auth.isAdmin() ? 'admin.html' : 'dashboard.html';
+    }
+
+    const form = document.getElementById('loginForm');
+    const errorEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+
+    document.getElementById('togglePwd').addEventListener('click', function() {
+      const pwd = document.getElementById('password');
+      const show = pwd.type === 'password';
+      pwd.type = show ? 'text' : 'password';
+      this.textContent = show ? 'Hide' : 'Show';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div>';
+      await new Promise(r => setTimeout(r, 600));
+      try {
+        const user = GH.auth.login(
+          document.getElementById('email').value.trim(),
+          document.getElementById('password').value
+        );
+        GH.ui.toast('Welcome back, ' + user.name.split(' ')[0] + '!', 'success');
+        setTimeout(() => {
+          window.location.href = user.role === 'admin' ? 'admin.html' : 'dashboard.html';
+        }, 500);
+      } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Log In</span>';
+      }
+    });
+  });
+
+  function fillCreds(email, password) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').value = password;
+  }
+</script>
+</body>
+</html>

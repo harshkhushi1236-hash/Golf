@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — GolfHero</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <style>
+    .admin-badge { background:rgba(224,92,92,0.12); border:1px solid rgba(224,92,92,0.3); color:var(--danger); border-radius:4px; font-size:0.65rem; padding:2px 8px; letter-spacing:0.08em; text-transform:uppercase; font-weight:600; }
+    .draw-sim-balls { display:flex; gap:10px; flex-wrap:wrap; margin:20px 0; }
+    .draw-ball {
+      width:56px;height:56px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-display);font-size:1.4rem;
+      border:2px solid var(--gold-dim);color:var(--gold);
+      background:rgba(201,168,76,0.06);
+      transition:all 0.4s;
+    }
+    .draw-ball.revealed { background:var(--gold);color:var(--black);border-color:var(--gold);transform:scale(1.1); }
+    .user-row td:first-child { font-weight:500; }
+    .analytics-card { text-align:center; }
+    .analytics-card .stat-value { font-size:2rem; }
+    @media(max-width:768px){
+      .sidebar{position:fixed;top:0;left:-280px;z-index:600;width:260px;transition:left 0.3s;}
+      .sidebar.open{left:0;}
+      .page-body,.page-header{padding:20px;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="flex gap-10 align-items:center" style="align-items:center">
+        <a href="../index.html" class="logo">Golf<span style="color:var(--gold)">Hero</span></a>
+        <span class="admin-badge">Admin</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Management</div>
+      <button class="sidebar-nav-item active" data-tab-target="analytics">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </button>
+      <button class="sidebar-nav-item" data-tab-target="users">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Users
+      </button>
+      <button class="sidebar-nav-item" data-tab-target="draws">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Draw Engine
+      </button>
+      <button class="sidebar-nav-item" data-tab-target="charities">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Charities
+      </button>
+      <button class="sidebar-nav-item" data-tab-target="winners">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Winners
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="dashboard.html" class="sidebar-nav-item" style="display:flex">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        User View
+      </a>
+      <button onclick="GH.auth.logout()" class="sidebar-nav-item" style="width:100%;color:var(--danger)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <main class="main-content">
+    <div class="page-header">
+      <div class="flex-between mb-4">
+        <div style="font-family:var(--font-display);font-size:1.8rem;font-weight:300">Admin Panel</div>
+        <div class="flex gap-10">
+          <span class="admin-badge">Administrator</span>
+          <span class="body-sm muted" id="adminDate"></span>
+        </div>
+      </div>
+      <p class="body-sm muted mb-24">Full platform control — users, draws, charities, and payouts.</p>
+    </div>
+
+    <div class="page-body">
+
+      <!-- ─── ANALYTICS ─── -->
+      <div id="panel-analytics" class="panel-section">
+        <div class="grid-4 mb-32">
+          <div class="stat-block analytics-card">
+            <div class="stat-value" id="aTotal">—</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-block analytics-card">
+            <div class="stat-value gold" id="aActive">—</div>
+            <div class="stat-label">Active Subscribers</div>
+          </div>
+          <div class="stat-block analytics-card">
+            <div class="stat-value" id="aPrizePool">—</div>
+            <div class="stat-label">Prize Pool (month)</div>
+          </div>
+          <div class="stat-block analytics-card">
+            <div class="stat-value" id="aCharity">—</div>
+            <div class="stat-label">Charity Contributions</div>
+          </div>
+        </div>
+
+        <div class="grid-2 gap-24">
+          <div class="card">
+            <div class="label mb-20">Prize Pool Breakdown</div>
+            <div class="prize-bar mb-16">
+              <div style="flex:40;height:100%;background:var(--gold);border-radius:4px"></div>
+              <div style="flex:35;height:100%;background:var(--info);border-radius:4px;margin:0 2px"></div>
+              <div style="flex:25;height:100%;background:var(--success);border-radius:4px"></div>
+            </div>
+            <div class="flex-col gap-10">
+              <div class="flex-between"><span class="body-sm muted">5 Match Jackpot (40%)</span><span class="body-sm gold" id="bPool5">—</span></div>
+              <div class="flex-between"><span class="body-sm muted">4 Match (35%)</span><span class="body-sm" id="bPool4">—</span></div>
+              <div class="flex-between"><span class="body-sm muted">3 Match (25%)</span><span class="body-sm" id="bPool3">—</span></div>
+              <div class="divider" style="margin:8px 0"></div>
+              <div class="flex-between"><span class="body-sm muted font-weight:600">Total Pool</span><span class="gold" id="bPoolTotal">—</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="label mb-20">Charity Contributions</div>
+            <div id="charityBreakdown"><div class="body-sm muted">Loading…</div></div>
+          </div>
+        </div>
+
+        <div class="card mt-24">
+          <div class="label mb-20">Draw Statistics</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Month</th><th>Status</th><th>Numbers</th><th>Winners</th><th>Pool</th></tr>
+              </thead>
+              <tbody id="drawStatsTable"><tr><td colspan="5" class="muted body-sm">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── USERS ─── -->
+      <div id="panel-users" class="panel-section hidden">
+        <div class="flex-between mb-24">
+          <h2 class="display-sm">Users</h2>
+          <div class="flex gap-10">
+            <input type="text" class="form-input" id="userSearch" placeholder="Search by name or email…" style="width:220px" oninput="filterUsers()">
+          </div>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Role</th><th>Subscription</th><th>Charity</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="usersTable"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── DRAW ENGINE ─── -->
+      <div id="panel-draws" class="panel-section hidden">
+        <h2 class="display-sm mb-8">Draw Engine</h2>
+        <p class="body-sm muted mb-28">Configure, simulate, and publish monthly draws.</p>
+
+        <div class="grid-2 gap-24 mb-24">
+          <div class="card card-gold">
+            <div class="label mb-16">Current Draw</div>
+            <div class="stat-value gold mb-4" id="currentDrawMonth">—</div>
+            <div class="stat-label" id="currentDrawStatus">—</div>
+
+            <div class="divider"></div>
+
+            <div class="form-group mb-16">
+              <label class="form-label">Draw Logic</label>
+              <select class="form-select" id="drawLogic">
+                <option value="random">Random (lottery-style)</option>
+                <option value="weighted">Algorithmic (score frequency)</option>
+              </select>
+            </div>
+
+            <div class="flex-col gap-10">
+              <button class="btn btn-outline btn-full" onclick="simulateDraw()">▶ Run Simulation</button>
+              <button class="btn btn-primary btn-full" onclick="publishDraw()" id="publishBtn" disabled>✓ Publish Results</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="label mb-16">Simulated Numbers</div>
+            <div class="draw-sim-balls" id="simBalls">
+              <div class="body-sm muted">Run a simulation to preview numbers before publishing.</div>
+            </div>
+            <div id="simInfo" class="body-sm muted"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="flex-between mb-20">
+            <div class="label">Draw History</div>
+            <button class="btn btn-outline btn-sm" onclick="createNewDraw()">+ New Draw</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Month</th><th>Status</th><th>Numbers</th><th>Published</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="adminDrawTable"><tr><td colspan="5" class="muted">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── CHARITIES ─── -->
+      <div id="panel-charities" class="panel-section hidden">
+        <div class="flex-between mb-24">
+          <h2 class="display-sm">Charities</h2>
+          <button class="btn btn-primary btn-sm" onclick="GH.ui.modal('addCharityModal',true)">+ Add Charity</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Category</th><th>Subscribers</th><th>Total Raised</th><th>Events</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="charityTable"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── WINNERS ─── -->
+      <div id="panel-winners" class="panel-section hidden">
+        <h2 class="display-sm mb-8">Winner Verification</h2>
+        <p class="body-sm muted mb-24">Review, verify, and mark payouts for draw winners.</p>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>User</th><th>Draw</th><th>Match</th><th>Prize</th><th>Submission</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="winnersTable">
+                <tr>
+                  <td>John D.</td>
+                  <td>March 2025</td>
+                  <td><span class="badge badge-gold">4 Match</span></td>
+                  <td class="gold">£312.50</td>
+                  <td><a href="#" class="gold body-sm">View proof</a></td>
+                  <td><span class="badge badge-blue">Pending</span></td>
+                  <td>
+                    <div class="flex gap-6">
+                      <button class="btn btn-success btn-sm" onclick="verifyWinner(this)">Approve</button>
+                      <button class="btn btn-danger btn-sm" onclick="rejectWinner(this)">Reject</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Sarah R.</td>
+                  <td>February 2025</td>
+                  <td><span class="badge badge-muted">3 Match</span></td>
+                  <td class="gold">£187.50</td>
+                  <td><a href="#" class="gold body-sm">View proof</a></td>
+                  <td><span class="badge badge-green">Paid</span></td>
+                  <td><span class="body-sm muted">Completed</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══ ADD CHARITY MODAL ═══ -->
+<div class="modal-overlay" id="addCharityModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="display-sm">Add Charity</h3>
+      <button class="modal-close" onclick="GH.ui.modal('addCharityModal',false)">✕</button>
+    </div>
+    <div class="flex-col gap-16">
+      <div class="form-group">
+        <label class="form-label">Charity name</label>
+        <input type="text" class="form-input" id="charityName" placeholder="e.g. Junior Golf Foundation">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="charityCategory">
+          <option>Youth</option><option>Health</option><option>Veterans</option>
+          <option>Environment</option><option>Equality</option><option>Community</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" id="charityDesc" rows="3" placeholder="Describe the charity and its mission…" style="resize:vertical"></textarea>
+      </div>
+      <div class="flex gap-12">
+        <button class="btn btn-outline" onclick="GH.ui.modal('addCharityModal',false)" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" onclick="addCharity()" style="flex:2">Add Charity</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="display-sm">Edit User</h3>
+      <button class="modal-close" onclick="GH.ui.modal('editUserModal',false)">✕</button>
+    </div>
+    <div class="flex-col gap-16">
+      <input type="hidden" id="editUserId">
+      <div class="form-group">
+        <label class="form-label">Full name</label>
+        <input type="text" class="form-input" id="editUserName">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="editUserEmail">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subscription status</label>
+        <select class="form-select" id="editUserSub">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="flex gap-12">
+        <button class="btn btn-outline" onclick="GH.ui.modal('editUserModal',false)" style="flex:1">Cancel</button>
+        <button class="btn btn-primary" onclick="saveUserEdit()" style="flex:2">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+
+<script src="../js/app.js"></script>
+<script>
+  let simulatedNumbers = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!GH.auth.requireAuth(true)) return;
+    document.getElementById('adminDate').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long'});
+
+    // Sidebar nav
+    document.querySelectorAll('.sidebar-nav-item[data-tab-target]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.panel-section').forEach(p => p.classList.add('hidden'));
+        document.getElementById('panel-' + btn.dataset.tabTarget).classList.remove('hidden');
+      });
+    });
+
+    renderAll();
+  });
+
+  function renderAll() {
+    renderAnalytics();
+    renderUsers();
+    renderDraws();
+    renderCharities();
+  }
+
+  function renderAnalytics() {
+    const users = GH.store.get('users') || [];
+    const active = users.filter(u => u.subscriptionStatus === 'active');
+    const pool = GH.pool.calculate();
+    const charity = GH.charity.totalContributions();
+
+    document.getElementById('aTotal').textContent = users.length;
+    document.getElementById('aActive').textContent = active.length;
+    document.getElementById('aPrizePool').textContent = GH.ui.formatCurrency(pool.total);
+    document.getElementById('aCharity').textContent = GH.ui.formatCurrency(charity);
+
+    document.getElementById('bPool5').textContent = GH.ui.formatCurrency(pool.jackpot);
+    document.getElementById('bPool4').textContent = GH.ui.formatCurrency(pool.fourMatch);
+    document.getElementById('bPool3').textContent = GH.ui.formatCurrency(pool.threeMatch);
+    document.getElementById('bPoolTotal').textContent = GH.ui.formatCurrency(pool.total);
+
+    // Charity breakdown
+    const charities = GH.charity.getAll();
+    const breakdown = document.getElementById('charityBreakdown');
+    breakdown.innerHTML = '';
+    charities.forEach(c => {
+      const count = users.filter(u => u.selectedCharity === c.id).length;
+      if (!count) return;
+      const div = document.createElement('div');
+      div.className = 'flex-between mb-10';
+      div.innerHTML = `<span class="body-sm">${GH.ui.charityIcon(c.category)} ${c.name}</span><span class="body-sm muted">${count} subscriber${count!==1?'s':''}</span>`;
+      breakdown.appendChild(div);
+    });
+    if (!breakdown.children.length) breakdown.innerHTML = '<div class="body-sm muted">No selections yet.</div>';
+
+    // Draw stats table
+    const draws = GH.draws.getAll();
+    const statsBody = document.getElementById('drawStatsTable');
+    statsBody.innerHTML = draws.map(d => `
+      <tr>
+        <td>${d.month}</td>
+        <td><span class="badge ${d.status==='published'?'badge-green':'badge-blue'}">${d.status}</span></td>
+        <td>${d.numbers ? d.numbers.join(', ') : '—'}</td>
+        <td>—</td>
+        <td>${GH.ui.formatCurrency(pool.total)}</td>
+      </tr>`).join('');
+  }
+
+  function renderUsers() {
+    const users = GH.store.get('users') || [];
+    renderUserRows(users);
+  }
+
+  function renderUserRows(users) {
+    const tbody = document.getElementById('usersTable');
+    if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="muted body-sm">No users found.</td></tr>'; return; }
+    tbody.innerHTML = users.map(u => {
+      const charity = GH.charity.getById(u.selectedCharity);
+      return `<tr class="user-row">
+        <td>${u.name}</td>
+        <td class="muted">${u.email}</td>
+        <td><span class="badge ${u.role==='admin'?'badge-red':'badge-blue'}">${u.role}</span></td>
+        <td><span class="badge ${u.subscriptionStatus==='active'?'badge-green':'badge-muted'}">${u.subscriptionStatus||'none'}</span></td>
+        <td class="body-sm muted">${charity ? charity.name : '—'}</td>
+        <td>
+          <div class="flex gap-6">
+            <button class="btn btn-outline btn-sm" onclick='openEditUser(${JSON.stringify(u)})'>Edit</button>
+            ${u.role!=='admin'?`<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Delete</button>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function filterUsers() {
+    const q = document.getElementById('userSearch').value.toLowerCase();
+    const users = (GH.store.get('users') || []).filter(u =>
+      u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+    renderUserRows(users);
+  }
+
+  function openEditUser(user) {
+    document.getElementById('editUserId').value = user.id;
+    document.getElementById('editUserName').value = user.name;
+    document.getElementById('editUserEmail').value = user.email;
+    document.getElementById('editUserSub').value = user.subscriptionStatus || 'inactive';
+    GH.ui.modal('editUserModal', true);
+  }
+
+  function saveUserEdit() {
+    const id = document.getElementById('editUserId').value;
+    const users = GH.store.get('users') || [];
+    const idx = users.findIndex(u => u.id === id);
+    if (idx === -1) return;
+    users[idx].name = document.getElementById('editUserName').value;
+    users[idx].email = document.getElementById('editUserEmail').value;
+    users[idx].subscriptionStatus = document.getElementById('editUserSub').value;
+    GH.store.set('users', users);
+    GH.ui.modal('editUserModal', false);
+    GH.ui.toast('User updated', 'success');
+    renderUsers();
+  }
+
+  function deleteUser(id) {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    const users = (GH.store.get('users') || []).filter(u => u.id !== id);
+    GH.store.set('users', users);
+    GH.ui.toast('User deleted', 'info');
+    renderUsers();
+  }
+
+  function renderDraws() {
+    const draws = GH.draws.getAll();
+    const current = GH.draws.getCurrent();
+    document.getElementById('currentDrawMonth').textContent = current ? current.month : 'No active draw';
+    document.getElementById('currentDrawStatus').textContent = current ? 'Active — awaiting publish' : '—';
+
+    const tbody = document.getElementById('adminDrawTable');
+    tbody.innerHTML = draws.map(d => `
+      <tr>
+        <td>${d.month}</td>
+        <td><span class="badge ${d.status==='published'?'badge-green':d.status==='active'?'badge-blue':'badge-muted'}">${d.status}</span></td>
+        <td style="font-family:var(--font-mono);font-size:0.85rem">${d.numbers ? d.numbers.join(' · ') : '—'}</td>
+        <td class="muted body-sm">${d.publishedAt ? GH.ui.formatDate(d.publishedAt) : '—'}</td>
+        <td>
+          ${d.status==='active' ? `<button class="btn btn-outline btn-sm" onclick="simulateDraw()">Simulate</button>` : ''}
+          ${d.status==='published' ? '<span class="body-sm muted">Published</span>' : ''}
+        </td>
+      </tr>`).join('');
+  }
+
+  function renderCharities() {
+    const charities = GH.charity.getAll();
+    const users = GH.store.get('users') || [];
+    const tbody = document.getElementById('charityTable');
+    tbody.innerHTML = charities.map(c => {
+      const count = users.filter(u => u.selectedCharity === c.id).length;
+      return `<tr>
+        <td><span style="margin-right:6px">${GH.ui.charityIcon(c.category)}</span>${c.name}</td>
+        <td><span class="badge badge-muted">${c.category}</span></td>
+        <td>${count}</td>
+        <td class="gold">${GH.ui.formatCurrency(c.totalRaised)}</td>
+        <td class="muted body-sm">${c.events.length} event${c.events.length!==1?'s':''}</td>
+        <td>
+          <div class="flex gap-6">
+            <button class="btn btn-outline btn-sm" onclick="editCharity('${c.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCharity('${c.id}')">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function simulateDraw() {
+    const balls = document.getElementById('simBalls');
+    const logic = document.getElementById('drawLogic').value;
+    balls.innerHTML = '';
+    document.getElementById('simInfo').textContent = 'Generating…';
+
+    let nums;
+    if (logic === 'weighted') {
+      // Weighted by user score frequencies
+      const users = GH.store.get('users') || [];
+      const allScores = GH.store.get('scores') || {};
+      const freq = {};
+      users.forEach(u => {
+        (allScores[u.id] || []).forEach(s => { freq[s.score] = (freq[s.score] || 0) + 1; });
+      });
+      const pool = [];
+      Object.entries(freq).forEach(([score, count]) => {
+        for (let i = 0; i < count; i++) pool.push(parseInt(score));
+      });
+      if (pool.length < 5) {
+        nums = GH.draws.simulate(); // fallback
+      } else {
+        const set = new Set();
+        while (set.size < 5) set.add(pool[Math.floor(Math.random() * pool.length)]);
+        nums = [...set].sort((a,b)=>a-b);
+      }
+    } else {
+      nums = GH.draws.simulate();
+    }
+
+    simulatedNumbers = nums;
+
+    // Animate reveal
+    for (let i = 0; i < 5; i++) {
+      const ball = document.createElement('div');
+      ball.className = 'draw-ball';
+      ball.textContent = '?';
+      balls.appendChild(ball);
+    }
+    const ballEls = balls.querySelectorAll('.draw-ball');
+    for (let i = 0; i < 5; i++) {
+      await new Promise(r => setTimeout(r, 350));
+      ballEls[i].textContent = nums[i];
+      ballEls[i].classList.add('revealed');
+    }
+
+    document.getElementById('simInfo').textContent = `Simulation complete (${logic} mode). Numbers: ${nums.join(', ')}`;
+    document.getElementById('publishBtn').disabled = false;
+    GH.ui.toast('Simulation complete! Review numbers before publishing.', 'info');
+  }
+
+  function publishDraw() {
+    if (!simulatedNumbers) { GH.ui.toast('Run a simulation first', 'error'); return; }
+    const current = GH.draws.getCurrent();
+    if (!current) { GH.ui.toast('No active draw to publish', 'error'); return; }
+    if (!confirm(`Publish draw for ${current.month} with numbers: ${simulatedNumbers.join(', ')}?`)) return;
+    GH.draws.publish(current.id, simulatedNumbers);
+    GH.ui.toast('Draw published! ' + current.month + ' results are now live.', 'success');
+    simulatedNumbers = null;
+    document.getElementById('publishBtn').disabled = true;
+    document.getElementById('simBalls').innerHTML = '<div class="body-sm muted">Draw published. Create a new draw for next month.</div>';
+    renderDraws(); renderAnalytics();
+  }
+
+  function createNewDraw() {
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const now = new Date();
+    const month = months[now.getMonth()] + ' ' + now.getFullYear();
+    if (GH.draws.getCurrent()) { GH.ui.toast('Publish the current draw first', 'error'); return; }
+    GH.draws.create(month);
+    GH.ui.toast('New draw created: ' + month, 'success');
+    renderDraws();
+  }
+
+  function addCharity() {
+    const name = document.getElementById('charityName').value.trim();
+    const category = document.getElementById('charityCategory').value;
+    const desc = document.getElementById('charityDesc').value.trim();
+    if (!name || !desc) { GH.ui.toast('Name and description required', 'error'); return; }
+    const charities = GH.charity.getAll();
+    charities.push({ id:'c_'+Date.now(), name, category, description:desc, image:null, totalRaised:0, events:[] });
+    GH.store.set('charities', charities);
+    GH.ui.toast('Charity added!', 'success');
+    GH.ui.modal('addCharityModal', false);
+    renderCharities();
+  }
+
+  function editCharity(id) {
+    GH.ui.toast('Edit charity (demo — extend as needed)', 'info');
+  }
+
+  function deleteCharity(id) {
+    if (!confirm('Delete this charity?')) return;
+    const charities = GH.charity.getAll().filter(c => c.id !== id);
+    GH.store.set('charities', charities);
+    GH.ui.toast('Charity deleted', 'info');
+    renderCharities();
+  }
+
+  function verifyWinner(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('td:nth-child(6)').innerHTML = '<span class="badge badge-green">Approved</span>';
+    row.querySelector('td:nth-child(7)').innerHTML = '<button class="btn btn-primary btn-sm" onclick="markPaid(this)">Mark Paid</button>';
+    GH.ui.toast('Winner approved!', 'success');
+  }
+
+  function rejectWinner(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('td:nth-child(6)').innerHTML = '<span class="badge badge-red">Rejected</span>';
+    row.querySelector('td:nth-child(7)').innerHTML = '<span class="body-sm muted">Rejected</span>';
+    GH.ui.toast('Submission rejected', 'info');
+  }
+
+  function markPaid(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('td:nth-child(7)').innerHTML = '<span class="body-sm muted">Paid ✓</span>';
+    GH.ui.toast('Payment marked as completed', 'success');
+  }
+</script>
+</body>
+</html>
